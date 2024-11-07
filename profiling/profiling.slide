@@ -1,0 +1,88 @@
+# Profiling go applications
+7 Nov 2024
+
+Alex Carol
+acarolcampre@adobe.com
+
+: Notes on the title page (just because we can)
+
+## What is profiling?
+Profiling is the process of analyzing the performance of an application
+
+## Why do we profile?
+- To address performance issues
+- To optimize resource usage
+- To understand the behaviour of the application
+- ...
+
+## When to profile?
+- When the application is slow
+- When the application is using too much memory
+- When the application is using too much CPU
+- When requests are timing out
+- ...
+
+## What options do we have?
+- Use the `pprof` package
+- Use go benchmarking
+- Use the `net/http/pprof` package
+- Use third-party continuous profiling tools
+
+## Assessing our program
+.code code/cmd/factorial/main.go /^// CALL/,/^// CALLEND/
+.image assets/factorial-time.png _ 980
+
+## Profiling CPU usage
+.code code/cmd/factorial/main.go /^var cpuprofile/,/^}/
+
+`./factorial -cpuprofile=factorial.pprof`
+
+## Understanding the profile
+.image assets/factorial-pprof.png _ 980
+
+.link assets/factorial-pprof.pdf Graph
+.link assets/factorial-pprof.html Weblist
+
+: Mention that big.Mul is the largest "observable" bottleneck
+
+## Using benchmarking
+.code code/cmd/factorial/main.go /^func factorial\(/,/^}/
+.code code/cmd/factorial/main_test.go /^func BenchmarkFactorial/,/^}/
+`go test -bench=. ./...`
+
+.image assets/factorial-bench.png _ 980
+
+## Optimising the code
+.code code/cmd/factorial/main.go /^func factorialOpt/,/^}/
+.code code/cmd/factorial/main_test.go /^func BenchmarkFactorialOpt/,/^}/
+`go test -bench=. ./...`
+
+.image assets/factorial-opt-bench.png _ 980
+
+## Profiling in production - Getting started
+.code code/cmd/webserver/main.go /import _ "net\/http\/pprof"/
+.code code/cmd/webserver/main.go /^func main\(\) {/,/^}/
+
+: explain that we need to import net/http/pprof and explain this serveMux magic we're doing
+
+## Profiling in production - Heap
+.image assets/webserver-pprof.png _ 980
+
+.link assets/webserver-pprof-before.pdf Before requests
+.link assets/webserver-pprof-after.pdf After requests
+
+## Profiling in production - Locking
+Simulating a locking issue:
+
+.code code/cmd/webserver/main.go /^func lockingHandler\(/,/^}/
+
+ `go tool pprof -seconds 5 webserver http://localhost:6060/debug/pprof/goroutine`
+
+
+.link assets/webserver-goroutine-pprof.pdf Goroutine profile
+
+
+## Links
+- https://pkg.go.dev/testing#hdr-Benchmarks
+- https://pkg.go.dev/net/http/pprof
+- https://go.dev/blog/pprof
