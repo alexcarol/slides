@@ -7,20 +7,17 @@ acarolcampre@adobe.com
 : Notes on the title page (just because we can)
 
 ## What is profiling?
-Profiling is the process of analyzing the performance of an application
+_In software engineering, profiling [...] is a form of dynamic program analysis that measures, for example, the space (memory) or time complexity of a program, the usage of particular instructions, or the frequency and duration of function calls._ - Wikipedia
 
-## Why do we profile?
-- To address performance issues
-- To optimize resource usage
-- To understand the behaviour of the application
-- ...
 
-## When to profile?
-- When the application is slow
-- When the application is using too much memory
-- When the application is using too much CPU
-- When requests are timing out
-- ...
+## What is really profiling though?
+Using any tools at hand to figure out why your application is behaving in an unexpected way:
+- The application is slow
+- The application is using too much memory
+- The application is using too much CPU
+- Requests are timing out
+- Or any weird behaviour you can't explain
+
 
 ## What options do we have?
 - Use the `pprof` package
@@ -29,6 +26,7 @@ Profiling is the process of analyzing the performance of an application
 - Use third-party continuous profiling tools
 
 ## Assessing our program
+.code code/cmd/factorial/main.go /^func factorial\(/,/^}/
 .code code/cmd/factorial/main.go /^// CALL/,/^// CALLEND/
 .image assets/factorial-time.png _ 980
 
@@ -54,28 +52,48 @@ Profiling is the process of analyzing the performance of an application
 
 ## Optimising the code
 .code code/cmd/factorial/main.go /^func factorialOpt/,/^}/
+
 .code code/cmd/factorial/main_test.go /^func BenchmarkFactorialOpt/,/^}/
 `go test -bench=. ./...`
 
 .image assets/factorial-opt-bench.png _ 980
 
+## Optimising the code - the result
+Before:
+
+.image assets/factorial-time.png _ 980
+
+After:
+
+.image assets/factorial2-time.png _ 980
+
+
 ## Profiling in production - Getting started
 .code code/cmd/webserver/main.go /import _ "net\/http\/pprof"/
 .code code/cmd/webserver/main.go /^func main\(\) {/,/^}/
 
+.link http://localhost:6060/debug/pprof/ Pprof endpoint
+
 : explain that we need to import net/http/pprof and explain this serveMux magic we're doing
 
-## Profiling in production - Heap
+## Profiling in production - Finding memory leaks
 .image assets/webserver-pprof.png _ 980
 
 .link assets/webserver-pprof-before.pdf Before requests
 .link assets/webserver-pprof-after.pdf After requests
+
+## Profiling in production - The culprit
+.code code/cmd/webserver/main.go /^func leakyHandler\(/,/^}/
 
 ## Profiling in production - Locking
 Simulating a locking issue:
 
 .code code/cmd/webserver/main.go /^func lockingHandler\(/,/^}/
 
+```
+curl http://localhost:8080/lock
+curl http://localhost:8080/leak 
+```
  `go tool pprof -seconds 5 webserver http://localhost:6060/debug/pprof/goroutine`
 
 
@@ -86,3 +104,4 @@ Simulating a locking issue:
 - https://pkg.go.dev/testing#hdr-Benchmarks
 - https://pkg.go.dev/net/http/pprof
 - https://go.dev/blog/pprof
+- https://github.com/DataDog/go-profiler-notes/blob/main/guide/README.md
